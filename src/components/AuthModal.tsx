@@ -13,6 +13,9 @@ interface AuthModalProps {
 const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [cooldown, setCooldown] = useState(0);
+  const [cooldownInterval, setCooldownInterval] = useState<number | null>(null);
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -24,13 +27,17 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    let success = false;
+    if (cooldown > 0) return; // prevent spam clicks
 
+    let success = false;
     if (isLogin) {
       success = await signIn(formData.email, formData.password);
     } else {
       success = await signUp(formData.name, formData.email, formData.password);
     }
+
+    // Always start cooldown to prevent rapid retries
+    startCooldown();
 
     if (success) {
       onClose();
@@ -38,12 +45,29 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
     }
   };
 
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => ({
       ...prev,
       [e.target.name]: e.target.value
     }));
   };
+
+  const startCooldown = () => {
+    setCooldown(60);
+    const interval = window.setInterval(() => {
+      setCooldown(prev => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    setCooldownInterval(interval);
+  };
+
+
 
   if (!isOpen) return null;
 
@@ -178,17 +202,20 @@ const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
             <Button
               type="submit"
               className="w-full h-12 btn-primary font-semibold"
-              disabled={isLoading}
+              disabled={isLoading || cooldown > 0}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                   {isLogin ? 'Signing in...' : 'Creating account...'}
                 </>
+              ) : cooldown > 0 ? (
+                `Wait ${cooldown}s`
               ) : (
                 isLogin ? 'Sign In' : 'Create Account'
               )}
             </Button>
+
 
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
