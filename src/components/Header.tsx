@@ -6,6 +6,14 @@ import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import SearchOverlay from "@/components/SearchOverlay";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+
 
 interface HeaderProps {
   onOpenCart: () => void;
@@ -16,7 +24,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenAuth }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const { totalItems } = useCart();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -165,31 +173,58 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenAuth }) => {
             </Button>
 
             {/* User */}
+            {/* User – Desktop */}
             {isAuthenticated ? (
-              <div className="hidden md:flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  className="flex items-center gap-2 hover:bg-primary/10"
-                  onClick={() => { }}
-                >
-                  <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-primary">
-                      {user?.name?.charAt(0).toUpperCase()}
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    className="hidden md:flex items-center gap-2 hover:bg-primary/10"
+                  >
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center">
+                      <span className="text-sm font-semibold text-primary">
+                        {user?.name?.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium">
+                      {user?.name?.split(' ')[0]}
                     </span>
-                  </div>
-                  <span className="text-sm font-medium">
-                    {user?.name?.split(' ')[0]}
-                  </span>
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={logout}
-                  className="border-primary/30 hover:bg-primary hover:text-primary-foreground transition-all"
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent
+                  align="end"
+                  className="w-48 bg-background border-border shadow-lg"
                 >
-                  Logout
-                </Button>
-              </div>
+                  <div className="px-3 py-2">
+                    <p className="text-sm font-medium text-foreground">{user?.name}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user?.email}</p>
+                  </div>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem onClick={() => navigate('/profile')}>
+                    My Account
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={() => navigate('/orders')}>
+                    Orders
+                  </DropdownMenuItem>
+
+                  <DropdownMenuItem onClick={() => navigate('/wishlist')}>
+                    Wishlist
+                  </DropdownMenuItem>
+
+                  <DropdownMenuSeparator />
+
+                  <DropdownMenuItem
+                    onClick={signOut}
+                    className="text-destructive focus:text-destructive"
+                  >
+                    Logout
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             ) : (
               <Button
                 variant="ghost"
@@ -200,6 +235,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenAuth }) => {
                 <User className="w-5 h-5" />
               </Button>
             )}
+
 
             {/* Theme toggle – desktop */}
             <Button
@@ -288,7 +324,7 @@ const Header: React.FC<HeaderProps> = ({ onOpenCart, onOpenAuth }) => {
 
               <Button
                 variant="outline"
-                onClick={logout}
+                onClick={signOut}
                 className="w-full border-primary/30 hover:bg-primary hover:text-primary-foreground"
               >
                 Logout
